@@ -6,13 +6,24 @@ Bản 1.1.1 sửa lỗi chỉ tìm kiếm một lần khi Bing cập nhật kế
 
 ## Cài đặt
 
+### Máy tính — Edge / Brave
+
 1. Edge: nhập `edge://extensions` vào thanh địa chỉ. Brave: nhập `brave://extensions`.
 2. Bật **Developer mode / Chế độ dành cho nhà phát triển**.
 3. Chọn **Load unpacked / Tải tiện ích đã giải nén**.
-4. Chọn thư mục `D:\Extensions\bing-search-runner` chứa `manifest.json`.
+4. Chọn thư mục repository đã tải về chứa `manifest.json`.
 5. Ghim Bing Search Runner vào thanh công cụ để tiện mở.
 
 Nếu dùng file ZIP, giải nén trước rồi chọn thư mục chứa manifest.json.
+
+### Android — Edge Canary (thử nghiệm)
+
+- [Tải bản Android 1.2.1 (.crx)](downloads/android/bing-search-runner-android-v1.2.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải file cài.
+- [Hướng dẫn cài trên Android](downloads/android/README.md).
+- Bản Android dùng cùng chức năng với mã nguồn PC, với giao diện điều chỉnh cho màn hình hẹp. Gói đã được kiểm tra chữ ký và nội dung; chưa được xác nhận trên thiết bị Android thật.
+- Giữ Edge ở trước màn hình khi thử. Android có thể tạm dừng tab khi chuyển ứng dụng hoặc khóa màn hình.
+
+File CRX là gói cài đặt có thể chia sẻ công khai. Khóa ký riêng (`.pem`, `.key`) được giữ ngoài repository và được chặn bởi `.gitignore`.
 
 ## Sử dụng
 

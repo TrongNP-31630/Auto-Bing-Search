@@ -1,0 +1,3 @@
+# Extension signing keys stay outside version control.
+*.pem
+*.key
