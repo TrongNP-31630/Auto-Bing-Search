@@ -18,8 +18,8 @@ Nếu dùng file ZIP, giải nén trước rồi chọn thư mục chứa manife
 
 ### Android — Edge Canary (thử nghiệm)
 
-- [Tải bản Android 1.2.1 (.crx)](downloads/android/bing-search-runner-android-v1.2.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải file cài.
-- [Hướng dẫn cài trên Android](downloads/android/README.md).
+- [Tải bản Android 1.2.1 (.crx)](android/bing-search-runner-android-v1.2.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải file cài.
+- [Hướng dẫn cài trên Android](android/README.md).
 - Bản Android dùng cùng chức năng với mã nguồn PC, với giao diện điều chỉnh cho màn hình hẹp. Gói đã được kiểm tra chữ ký và nội dung; chưa được xác nhận trên thiết bị Android thật.
 - Giữ Edge ở trước màn hình khi thử. Android có thể tạm dừng tab khi chuyển ứng dụng hoặc khóa màn hình.
 
@@ -52,7 +52,7 @@ Chỉ dùng quyền lưu cấu hình/tiến độ trên máy và chạy script t
 
 ## Cập nhật từ phiên bản cũ
 
-Nếu đã tải thư mục `D:\Extensions\bing-search-runner`, vào trang quản lý extension và bấm **Reload / Tải lại**. Nếu trình duyệt yêu cầu chấp thuận quyền mới để thao tác trang Bing, chấp thuận rồi tải lại tab Bing. Cấu hình cũ vẫn được giữ: nếu delay trước đó là 30, đổi lại trong popup theo ý bạn.
+Sau khi cập nhật mã nguồn trong thư mục repository đã cài, vào trang quản lý extension và bấm **Reload / Tải lại**. Nếu trình duyệt yêu cầu chấp thuận quyền mới để thao tác trang Bing, chấp thuận rồi tải lại tab Bing. Cấu hình cũ vẫn được giữ: nếu delay trước đó là 30, đổi lại trong popup theo ý bạn.
 
 ## Kiểm tra logic bằng Node.js
 

@@ -1,8 +1,8 @@
 # Bing Search Runner — thử nghiệm trên Edge Android
 
-File cài: `bing-search-runner-android-v1.2.1.crx`.
+File cài: [bing-search-runner-android-v1.2.1.crx](bing-search-runner-android-v1.2.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải.
 
-Đây là gói từ mã nguồn hiện tại trong `D:\Extensions\Auto-Bing-Search`, giữ chức năng điền ô Bing rồi bấm kính lúp. Giao diện được điều chỉnh cho màn hình hẹp. Đã xác minh chữ ký CRX3 và nội dung ZIP; chưa xác nhận trên thiết bị Android thật.
+Đây là gói từ [mã nguồn PC trong cùng repository](../README.md), giữ chức năng điền ô Bing rồi bấm kính lúp. Giao diện được điều chỉnh cho màn hình hẹp. Đã xác minh chữ ký CRX3 và nội dung ZIP; chưa xác nhận trên thiết bị Android thật.
 
 ## Cài đặt
 
