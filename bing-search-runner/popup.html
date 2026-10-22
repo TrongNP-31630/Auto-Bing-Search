@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bing Search Runner</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header><span class="logo">B</span><div><h1>Bing Search Runner</h1><p>Tìm kiếm theo lịch của bạn</p></div></header>
+  <form id="settings">
+    <div class="fields">
+      <label>Số lượt tìm kiếm<input id="count" type="number" min="1" max="200" step="1" value="20" required></label>
+      <label>Chờ giữa các lượt (giây)<input id="delay" type="number" min="0" max="3600" step="any" value="5" required></label>
+    </div>
+    <label class="custom">Từ khóa của bạn <span>không bắt buộc</span><textarea id="queries" rows="4" maxlength="50000" placeholder="Mỗi dòng một từ khóa.&#10;Để trống: tự ghép 2–5 từ ngẫu nhiên mỗi lượt, có thể vô nghĩa."></textarea></label>
+    <section class="status" aria-live="polite">
+      <div class="status-top"><strong id="state">Sẵn sàng</strong><span id="progress">0 / 0</span></div>
+      <progress id="bar" value="0" max="1"></progress>
+      <p id="detail">Mở tab Bing rồi bấm Bắt đầu.</p>
+      <p id="last"></p>
+    </section>
+    <p id="error" role="alert" hidden></p>
+    <div class="actions"><button id="start" type="submit">Bắt đầu</button><button id="stop" type="button" disabled>Dừng</button></div>
+  </form>
+  <script src="popup.js"></script>
+</body>
+</html>
