@@ -29,7 +29,7 @@ File CRX là gói cài đặt có thể chia sẻ công khai. Khóa ký riêng (
 
 1. Mở `https://www.bing.com` và chọn tab đó.
 2. Bấm biểu tượng extension, nhập số lượt (1–200) và thời gian chờ (0–3600 giây). Cho phép số thập phân, ví dụ `0.5` giây.
-3. Để trống ô từ khóa để ghép 2–5 từ ngẫu nhiên từ bộ 264 từ Việt/Anh, có thể vô nghĩa (ví dụ `mây robot silver bánh`). Bản 1.2.1 bổ sung 200 từ tiếng Anh về thực phẩm, thiên nhiên, động vật, công nghệ, nghệ thuật và các chủ đề khác. Danh sách được tạo mới mỗi phiên, không theo mẫu câu và không trùng cụm trong cùng phiên. Hoặc nhập mỗi dòng một từ khóa riêng; danh sách riêng cần đủ số từ khóa khác nhau cho số lượt đã đặt.
+3. Để trống ô từ khóa để ghép 2–5 từ ngẫu nhiên từ bộ 464 từ Việt/Anh, có thể vô nghĩa (ví dụ `mây robot silver bánh`). Bản 1.2.2 bổ sung thêm 200 từ tiếng Anh về thực phẩm, động vật, thực vật, thời tiết, khoa học, công nghệ, đồ dùng, phương tiện và thể thao. Danh sách được tạo mới mỗi phiên, không theo mẫu câu và không trùng cụm trong cùng phiên. Hoặc nhập mỗi dòng một từ khóa riêng; danh sách riêng cần đủ số từ khóa khác nhau cho số lượt đã đặt.
 4. Bấm **Bắt đầu**. Extension điền văn bản vào ô tìm kiếm Bing, phát sự kiện cập nhật ô rồi bấm nút kính lúp. Không điều hướng bằng URL tìm kiếm và không thao tác thanh địa chỉ. Không lặp từ khóa trong cùng phiên.
 5. Bạn có thể chuyển sang tab khác, thu nhỏ trình duyệt hoặc đóng popup. Extension vẫn dùng đúng tab Bing ban đầu và không tự giành lại tiêu điểm.
 6. Mở extension từ bất kỳ tab nào để xem tiến độ hoặc bấm **Dừng**.

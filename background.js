@@ -24,6 +24,29 @@ words.push(
   'puzzle', 'chess', 'domino', 'sudoku', 'kite', 'balloon', 'lantern', 'candle', 'mirror', 'clock'
 );
 
+words.push(
+  'apricot', 'blueberry', 'raspberry', 'strawberry', 'blackberry', 'cranberry', 'fig', 'guava', 'kiwi', 'papaya',
+  'pineapple', 'plum', 'pear', 'pomegranate', 'lychee', 'durian', 'tangerine', 'lime', 'nectarine', 'persimmon',
+  'almond', 'cashew', 'walnut', 'pistachio', 'peanut', 'hazelnut', 'oat', 'barley', 'rice', 'wheat',
+  'noodle', 'pasta', 'pizza', 'sandwich', 'pancake', 'waffle', 'biscuit', 'cookie', 'croissant', 'bagel',
+  'soup', 'salad', 'omelet', 'dumpling', 'sushi', 'tofu', 'curry', 'stew', 'porridge', 'pudding',
+  'kangaroo', 'koala', 'zebra', 'giraffe', 'elephant', 'rhinoceros', 'hippopotamus', 'leopard', 'cheetah', 'lion',
+  'fox', 'wolf', 'bear', 'deer', 'moose', 'otter', 'beaver', 'squirrel', 'hedgehog', 'raccoon',
+  'octopus', 'squid', 'jellyfish', 'starfish', 'seahorse', 'lobster', 'crab', 'shrimp', 'coral', 'stingray',
+  'sparrow', 'swallow', 'parrot', 'peacock', 'flamingo', 'pelican', 'stork', 'heron', 'woodpecker', 'hummingbird',
+  'rose', 'tulip', 'daisy', 'orchid', 'lotus', 'sunflower', 'lavender', 'jasmine', 'lily', 'dandelion',
+  'bamboo', 'cactus', 'fern', 'moss', 'ivy', 'oak', 'pine', 'maple', 'willow', 'cedar',
+  'beach', 'lagoon', 'reef', 'bay', 'cliff', 'cave', 'dune', 'peninsula', 'plateau', 'wetland',
+  'blizzard', 'drizzle', 'hail', 'humidity', 'monsoon', 'tornado', 'typhoon', 'vapor', 'temperature', 'atmosphere',
+  'electron', 'proton', 'neutron', 'molecule', 'atom', 'photon', 'magnet', 'plasma', 'prism', 'spectrum',
+  'algorithm', 'database', 'network', 'server', 'router', 'browser', 'software', 'hardware', 'processor', 'memory',
+  'notebook', 'envelope', 'postcard', 'stamp', 'stapler', 'eraser', 'ruler', 'scissors', 'folder', 'bookmark',
+  'sofa', 'armchair', 'desk', 'cupboard', 'wardrobe', 'shelf', 'curtain', 'carpet', 'pillow', 'blanket',
+  'spoon', 'fork', 'knife', 'plate', 'bowl', 'cup', 'kettle', 'teapot', 'skillet', 'saucepan',
+  'bicycle', 'scooter', 'skateboard', 'tram', 'subway', 'ferry', 'canoe', 'kayak', 'helicopter', 'airplane',
+  'archery', 'fencing', 'rowing', 'sailing', 'surfing', 'skiing', 'snowboarding', 'wrestling', 'gymnastics', 'triathlon'
+);
+
 function randomIndex(max) {
   return crypto.getRandomValues(new Uint32Array(1))[0] % max;
 }

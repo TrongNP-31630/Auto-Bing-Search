@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bing Search Runner",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Tìm kiếm theo lịch trong một tab Bing, với số lượt và thời gian chờ tùy chọn.",
   "minimum_chrome_version": "120",
   "permissions": ["storage", "scripting"],
