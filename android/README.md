@@ -1,4 +1,4 @@
-# Bing Search Runner — thử nghiệm trên Edge Android
+# Bing Search Runner 1.3.1 — thử nghiệm trên Edge Android
 
 File cài: [bing-search-runner-android-v1.3.1.crx](bing-search-runner-android-v1.3.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải.
 
@@ -8,7 +8,7 @@ Bản 1.3.1 bao gồm bộ 464 từ ngẫu nhiên và tùy chọn **Tự xóa l�
 
 ## Cập nhật bản đã cài
 
-Cài file CRX 1.3.1 qua cùng mục **Extension install by crx** như trước. Gói dùng cùng khóa ký và cùng extension ID với 1.2.1. Nếu trình duyệt yêu cầu, cấp thêm quyền truy cập lịch sử, sau đó tải lại tab Bing. Việc trình duyệt Android hỗ trợ cập nhật tại chỗ và API lịch sử vẫn cần kiểm tra trên thiết bị thật. Nếu báo lỗi quyền hoặc không xóa được, bỏ chọn tùy chọn xóa lịch sử để tiếp tục dùng tìm kiếm.
+Cài file CRX 1.3.1 qua cùng mục **Extension install by crx** như trước. Gói dùng cùng khóa ký và cùng extension ID với bản Android cũ. Nếu trình duyệt yêu cầu, cấp thêm quyền truy cập lịch sử, sau đó tải lại tab Bing. Việc trình duyệt Android hỗ trợ cập nhật tại chỗ và API lịch sử vẫn cần kiểm tra trên thiết bị thật. Nếu báo lỗi quyền hoặc không xóa được, bỏ chọn tùy chọn xóa lịch sử để tiếp tục dùng tìm kiếm.
 
 ## Cài đặt
 
