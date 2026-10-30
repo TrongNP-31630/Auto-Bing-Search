@@ -1,4 +1,4 @@
-const DEFAULTS = { count: 20, delay: 5, queries: '' };
+const DEFAULTS = { count: 20, delay: 5, queries: '', clearHistory: true };
 const words = ['mây', 'biển', 'mèo', 'sách', 'xanh', 'đỏ', 'trăng', 'nắng', 'gió', 'sông', 'núi', 'hoa', 'cá', 'chim', 'rừng', 'đảo', 'bánh', 'trà', 'nhạc', 'ảnh', 'đèn', 'bút', 'giấy', 'mưa', 'cầu', 'đá', 'cát', 'cây', 'lá', 'tuyết', 'bạc', 'vàng', 'ngọc', 'sóng', 'tàu', 'xe', 'đường', 'phố', 'nhà', 'vườn', 'robot', 'pixel', 'piano', 'guitar', 'camera', 'laptop', 'orange', 'purple', 'river', 'ocean', 'forest', 'planet', 'comet', 'rocket', 'coffee', 'window', 'silver', 'dragon', 'panda', 'tiger', 'music', 'cloud', 'paper', 'sunset'];
 
 words.push(
@@ -83,7 +83,71 @@ function validate(input) {
   if (!Number.isInteger(count) || count < 1 || count > 200) throw new Error('Số lượt phải là số nguyên từ 1 đến 200.');
   if (!Number.isFinite(delay) || delay < 0 || delay > 3600) throw new Error('Thời gian chờ phải từ 0 đến 3600 giây, có thể nhập số thập phân.');
   if (typeof input.queries !== 'string' || input.queries.length > 50000) throw new Error('Danh sách từ khóa không hợp lệ hoặc quá dài.');
-  return { count, delay, queries: input.queries };
+  return { count, delay, queries: input.queries, clearHistory: input.clearHistory !== false };
+}
+
+const HISTORY_DELETE_DELAY_MS = 5000;
+const historyTimers = new Map();
+
+function scheduleHistoryCleanup(target) {
+  if (historyTimers.has(target.key)) return;
+  const timer = setTimeout(() => {
+    historyTimers.delete(target.key);
+    eventJob(() => cleanHistoryTarget(target));
+  }, Math.max(0, target.deleteAt - Date.now()));
+  historyTimers.set(target.key, timer);
+}
+
+async function cleanHistoryTarget(target) {
+  // Re-read the persisted job when the timer fires, including after a worker
+  // restart. It may already be settled by another navigation/history event.
+  const saved = await chrome.storage.local.get('historyTargets');
+  target = (saved.historyTargets || []).find(item => item.key === target.key);
+  if (!target) return;
+  if (target.status !== 'pending' || Date.now() > target.expiresAt) return;
+  if (!Number.isFinite(target.deleteAt)) {
+    target.deleteAt = Date.now() + HISTORY_DELETE_DELAY_MS;
+    await chrome.storage.local.set({ historyTargets: saved.historyTargets.map(item => item.key === target.key ? target : item) });
+  }
+  if (Date.now() < target.deleteAt) { scheduleHistoryCleanup(target); return; }
+  let note;
+  try {
+    const visits = await chrome.history.getVisits({ url: target.url });
+    // The history row can be written after tabs.onUpdated; onVisited retries it.
+    if (!visits.length) return;
+    // deleteUrl removes ALL visits to this exact URL. Preserve it if any older,
+    // synced, additional or unidentifiable visit would be lost along with ours.
+    const visit = visits[0];
+    if (visits.length !== 1 || visit.isLocal !== true || !Number.isFinite(visit.visitTime) || visit.visitTime < target.issuedAt || visit.visitTime > target.expiresAt) {
+      target.status = 'preserved';
+      note = 'Giữ lịch sử URL này vì có lượt truy cập cũ hoặc không xác định được lượt của extension.';
+    } else {
+      await chrome.history.deleteUrl({ url: target.url });
+      target.status = 'deleted';
+      note = 'Đã xóa mục lịch sử cục bộ của lượt tìm kiếm vừa rồi.';
+    }
+  } catch {
+    target.status = 'failed';
+    note = 'Chưa xóa được lịch sử. Kiểm tra quyền lịch sử của extension.';
+  }
+  const { historyTargets = [], run } = await chrome.storage.local.get(['historyTargets', 'run']);
+  const targets = historyTargets.map(item => item.key === target.key ? target : item);
+  const update = { historyTargets: targets };
+  if (run?.id === target.runId) update.run = { ...run, historyNote: note };
+  await chrome.storage.local.set(update);
+}
+
+async function trackSearchHistory(run, tabId, value) {
+  if (!run?.clearHistory || run.tabId !== tabId || !run.lastIssuedAt || !isBing(value)) return;
+  const url = new URL(value);
+  if (url.pathname !== '/search' || url.searchParams.get('q') !== run.lastQuery || Date.now() > run.lastIssuedAt + 120000) return;
+  const { historyTargets = [] } = await chrome.storage.local.get('historyTargets');
+  const key = `${run.id}:${run.done}:${url.href}`;
+  const existing = historyTargets.find(item => item.key === key);
+  if (existing) { await cleanHistoryTarget(existing); return; }
+  const target = { key, runId: run.id, url: url.href, issuedAt: run.lastIssuedAt, deleteAt: Date.now() + HISTORY_DELETE_DELAY_MS, expiresAt: run.lastIssuedAt + 120000, status: 'pending' };
+  await chrome.storage.local.set({ historyTargets: [...historyTargets.filter(item => item.expiresAt >= Date.now()), target].slice(-400) });
+  await cleanHistoryTarget(target);
 }
 
 async function finish(reason, error = false) {
@@ -101,7 +165,10 @@ async function handle(message, sender) {
   const { run } = await chrome.storage.local.get('run');
   if (sender.tab) {
     if (!ownsTab(sender, run)) return { run: null };
-    if (message.type === 'page') return { run };
+    if (message.type === 'page') {
+      await trackSearchHistory(run, sender.tab.id, message.url);
+      return await chrome.storage.local.get('run');
+    }
     if (message.type === 'fail') {
       if (message.runId === run.id && !run.stopped) await finish(message.error || 'Không thể thao tác ô tìm kiếm Bing.', true);
       return {};
@@ -112,7 +179,7 @@ async function handle(message, sender) {
     const done = run.done + 1, running = done < run.count;
     // Reserve once per loaded document before allowing a click, so worker
     // suspension, duplicate timers and storage events cannot duplicate a query.
-    await chrome.storage.local.set({ run: { ...run, done, running, lastPageId: message.pageId, nextAt: running ? Date.now() + run.delay * 1000 : null, lastQuery: query, reason: running ? '' : 'Đã gửi đủ lượt tìm kiếm.' } });
+    await chrome.storage.local.set({ run: { ...run, done, running, lastPageId: message.pageId, nextAt: running ? Date.now() + run.delay * 1000 : null, lastQuery: query, lastIssuedAt: Date.now(), reason: running ? '' : 'Đã gửi đủ lượt tìm kiếm.' } });
     await chrome.action.setBadgeBackgroundColor({ color: '#096b55' });
     await chrome.action.setBadgeText({ text: running ? String(done) : '' });
     return { task: { query, runId: run.id, done } };
@@ -125,7 +192,7 @@ async function handle(message, sender) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id || !isBing(tab.pendingUrl || tab.url)) throw new Error('Hãy mở và chọn tab https://www.bing.com trước khi bắt đầu.');
   const queue = makeQueue(settings);
-  await chrome.storage.local.set({ settings, run: { count: settings.count, delay: settings.delay, id: crypto.randomUUID(), queue, tabId: tab.id, done: 0, running: true, stopped: false, nextAt: Date.now(), lastPageId: null, lastQuery: '', reason: '', error: false } });
+  await chrome.storage.local.set({ settings, run: { count: settings.count, delay: settings.delay, clearHistory: settings.clearHistory, historyNote: '', id: crypto.randomUUID(), queue, tabId: tab.id, done: 0, running: true, stopped: false, nextAt: Date.now(), lastPageId: null, lastQuery: '', reason: '', error: false } });
   try {
     // Also inject into tabs that were open before the extension was installed.
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
@@ -154,16 +221,32 @@ chrome.tabs.onRemoved.addListener(tabId => eventJob(async () => {
   const { run } = await chrome.storage.local.get('run');
   if (run?.running && run.tabId === tabId) await finish('Tab Bing đã đóng.');
 }));
-chrome.tabs.onUpdated.addListener((tabId, change) => {
-  if (!change.url || isBing(change.url)) return;
+chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
+  const url = change.url || (change.status === 'complete' ? tab?.url : null);
+  if (!url) return;
   eventJob(async () => {
     const { run } = await chrome.storage.local.get('run');
-    if (run?.running && run.tabId === tabId) await finish('Tab tìm kiếm đã rời trang Bing.');
+    if (run?.running && run.tabId === tabId && !isBing(url)) await finish('Tab tìm kiếm đã rời trang Bing.');
+    else await trackSearchHistory(run, tabId, url);
   });
 });
+chrome.history.onVisited.addListener(item => eventJob(async () => {
+  const { historyTargets = [] } = await chrome.storage.local.get('historyTargets');
+  for (const target of historyTargets) {
+    if (target.url === item.url && target.status === 'pending') await cleanHistoryTarget(target);
+  }
+}));
 chrome.runtime.onStartup.addListener(() => eventJob(() => finish('Trình duyệt vừa khởi động lại. Bấm Bắt đầu để chạy phiên mới.')));
 chrome.runtime.onInstalled.addListener(() => eventJob(async () => {
   const { settings } = await chrome.storage.local.get('settings');
   if (!settings) await chrome.storage.local.set({ settings: DEFAULTS });
   await finish('Extension đã được cập nhật.');
 }));
+// Keep the final search's cleanup independent of the search run and its tab.
+// Timers don't survive worker suspension; their deadlines in storage do.
+eventJob(async () => {
+  const { historyTargets = [] } = await chrome.storage.local.get('historyTargets');
+  for (const target of historyTargets) {
+    if (target.status === 'pending') await cleanHistoryTarget(target);
+  }
+});

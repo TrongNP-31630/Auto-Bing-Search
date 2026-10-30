@@ -14,11 +14,14 @@
       <label>Chờ giữa các lượt (giây)<input id="delay" type="number" min="0" max="3600" step="any" value="5" required></label>
     </div>
     <label class="custom">Từ khóa của bạn <span>không bắt buộc</span><textarea id="queries" rows="4" maxlength="50000" placeholder="Mỗi dòng một từ khóa.&#10;Để trống: tự ghép 2–5 từ ngẫu nhiên mỗi lượt, có thể vô nghĩa."></textarea></label>
+    <label class="history-option"><input id="clearHistory" type="checkbox" checked> Tự xóa lịch sử sau 5 giây</label>
+    <p class="hint">Chỉ xóa lịch sử trình duyệt. Giữ lại URL có lượt truy cập cũ để tránh mất lịch sử trước đó.</p>
     <section class="status" aria-live="polite">
       <div class="status-top"><strong id="state">Sẵn sàng</strong><span id="progress">0 / 0</span></div>
       <progress id="bar" value="0" max="1"></progress>
       <p id="detail">Mở tab Bing rồi bấm Bắt đầu.</p>
       <p id="last"></p>
+      <p id="historyNote"></p>
     </section>
     <p id="error" role="alert" hidden></p>
     <div class="actions"><button id="start" type="submit">Bắt đầu</button><button id="stop" type="button" disabled>Dừng</button></div>

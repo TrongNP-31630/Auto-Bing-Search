@@ -5,7 +5,7 @@
   let pageUrl = location.href;
   let timer, navigationTimer, pendingNavigation, busy = false, generation = 0;
   async function send(type, extra = {}) {
-    const response = await chrome.runtime.sendMessage({ type, ...extra });
+    const response = await chrome.runtime.sendMessage({ type, ...(type === 'page' ? { url: location.href } : {}), ...extra });
     if (!response?.ok) throw new Error(response?.error || 'Không thể kết nối extension.');
     return response;
   }

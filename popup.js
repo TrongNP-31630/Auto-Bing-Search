@@ -9,7 +9,7 @@ async function send(type, settings) {
 function showError(error) { $('error').textContent = error.message; $('error').hidden = false; }
 function render() {
   const running = Boolean(run?.running);
-  for (const id of ['count', 'delay', 'queries', 'start']) $(id).disabled = running || busy;
+  for (const id of ['count', 'delay', 'queries', 'clearHistory', 'start']) $(id).disabled = running || busy;
   $('stop').disabled = !running || busy;
   $('state').textContent = running ? 'Đang chạy trong tab Bing' : run?.error ? 'Đã dừng do lỗi' : run ? 'Đã kết thúc' : 'Sẵn sàng';
   $('progress').textContent = `${run?.done || 0} / ${run?.count || 0}`;
@@ -19,12 +19,13 @@ function render() {
     ? (run.nextAt > Date.now() ? `Lượt tiếp theo sau khoảng ${Math.ceil((run.nextAt - Date.now()) / 1000)} giây.` : 'Đang đợi trang Bing sẵn sàng để tìm kiếm…')
     : run?.reason || 'Mở tab Bing rồi bấm Bắt đầu.';
   $('last').textContent = run?.lastQuery ? `Vừa tìm: ${run.lastQuery}` : '';
+  $('historyNote').textContent = run?.historyNote || '';
 }
 $('settings').addEventListener('submit', async event => {
   event.preventDefault();
   busy = true; $('error').hidden = true; render();
   try {
-    await send('start', { count: Number($('count').value), delay: Number($('delay').value), queries: $('queries').value });
+    await send('start', { count: Number($('count').value), delay: Number($('delay').value), queries: $('queries').value, clearHistory: $('clearHistory').checked });
     run = (await send('get')).run;
   } catch (error) { showError(error); }
   finally { busy = false; render(); }
@@ -48,6 +49,7 @@ setInterval(render, 1000);
     $('count').value = settings.count;
     $('delay').value = settings.delay;
     $('queries').value = settings.queries;
+    $('clearHistory').checked = settings.clearHistory !== false;
     run = data.run;
   } catch (error) { showError(error); }
   finally { busy = false; render(); }

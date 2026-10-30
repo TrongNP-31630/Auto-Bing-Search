@@ -6,9 +6,12 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const read = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 function setup() {
-  const data = {}, injections = [];
+  const data = {}, injections = [], visits = new Map(), deleted = [];
   const tabs = new Map([[7, { id: 7, url: 'https://www.bing.com/' }]]);
   let active = 7;
+  let now = Date.now(), nextTimer = 0;
+  const timers = new Map();
+  class Clock extends Date { static now() { return now; } }
   const event = () => ({ addListener(fn) { this.fn = fn; } });
   const chrome = {
     runtime: { id: 'test', onMessage: event(), onStartup: event(), onInstalled: event() },
@@ -18,16 +21,119 @@ function setup() {
     } },
     action: { async setBadgeText() {}, async setBadgeBackgroundColor() {} },
     scripting: { async executeScript(options) { injections.push(options); } },
+    history: { onVisited: event(), async getVisits({ url }) { return structuredClone(visits.get(url) || []); }, async deleteUrl({ url }) { deleted.push(url); visits.delete(url); } },
     tabs: { async query() { return [tabs.get(active)]; }, onRemoved: event(), onUpdated: event() }
   };
-  const load = () => vm.runInNewContext(read('background.js'), { chrome, crypto, URL, Date, Math, Promise, Set, Number, Error });
+  const load = () => vm.runInNewContext(read('background.js'), { chrome, crypto, URL, Date: Clock, Math, Promise, Set, Map, Number, Error,
+    setTimeout(fn, ms) { const id = ++nextTimer; timers.set(id, { fn, at: now + ms }); return id; } });
   const message = (type, extra = {}, sender = { id: 'test' }) => new Promise(resolve => chrome.runtime.onMessage.fn({ type, ...extra }, sender, resolve));
   const page = (type, extra = {}, tabId = 7) => message(type, extra, { id: 'test', tab: tabs.get(tabId), frameId: 0, url: tabs.get(tabId)?.url });
   const claim = pageId => page('claim', { runId: data.run.id, pageId });
+  const advance = async ms => {
+    now += ms;
+    for (const [id, timer] of [...timers]) {
+      if (timer.at <= now) { timers.delete(id); timer.fn(); await message('get'); }
+    }
+  };
   load();
-  return { data, injections, tabs, chrome, message, page, claim, load, select(id) { active = id; } };
+  return { data, injections, tabs, chrome, message, page, claim, load, visits, deleted, advance, select(id) { active = id; } };
 }
 const settings = { count: 3, delay: 0, queries: '' };
+test('waits the full five seconds and cleans final search even after a new run starts', async () => {
+  const h = setup(); await h.message('start', { settings: { ...settings, count: 1 } });
+  const { task } = await h.claim('a');
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(task.query)}`;
+  h.visits.set(url, [{ visitTime: h.data.run.lastIssuedAt, isLocal: true }]);
+  await h.page('page', { url });
+  await h.message('start', { settings: { ...settings, clearHistory: false } });
+  await h.advance(4999); assert.equal(h.deleted.length, 0);
+  await h.advance(1); assert.equal(h.deleted[0], url);
+  assert.equal(h.data.run.running, true);
+});
+
+test('rechecks history at deletion time and preserves a visit added during the delay', async () => {
+  const h = setup(); await h.message('start', { settings }); const { task } = await h.claim('a');
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(task.query)}`;
+  const visit = { visitTime: h.data.run.lastIssuedAt, isLocal: true };
+  h.visits.set(url, [visit]); await h.page('page', { url });
+  await h.advance(4000); h.visits.set(url, [visit, { ...visit, visitTime: visit.visitTime + 4000 }]);
+  await h.advance(1000);
+  assert.equal(h.deleted.length, 0); assert.match(h.data.run.historyNote, /Giữ lịch sử/);
+});
+
+test('restores pending cleanup deadline after worker reload without deleting early', async () => {
+  const h = setup(); await h.message('start', { settings }); const { task } = await h.claim('a');
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(task.query)}`;
+  h.visits.set(url, [{ visitTime: h.data.run.lastIssuedAt, isLocal: true }]);
+  await h.page('page', { url }); await h.advance(2000); h.load(); await h.message('get');
+  await h.advance(2999); assert.equal(h.deleted.length, 0);
+  await h.advance(1); assert.equal(h.deleted.length, 1);
+});
+
+test('cleans each generated search including final search; duplicate events do not erase later manual visits', async () => {
+  const h = setup(); await h.message('start', { settings });
+  for (let i = 0; i < 3; i++) {
+    const { task } = await h.claim(`page-${i}`);
+    const url = `https://www.bing.com/search?q=${encodeURIComponent(task.query)}`;
+    h.visits.set(url, [{ visitTime: h.data.run.lastIssuedAt, isLocal: true }]);
+    h.tabs.get(7).url = url;
+    h.chrome.tabs.onUpdated.fn(7, { url }); await h.message('get');
+    assert.equal(h.deleted.length, i);
+    await h.advance(5000);
+    assert.equal(h.deleted.length, i + 1);
+    h.visits.set(url, [{ visitTime: Date.now(), isLocal: true }]);
+    h.chrome.history.onVisited.fn({ url }); await h.page('page', { url });
+    assert.equal(h.deleted.length, i + 1);
+    assert.ok(h.visits.has(url), 'subsequent manual visit was removed');
+  }
+  assert.equal(h.data.run.running, false);
+});
+
+test('preserves URLs with older, synced, multiple or unknown visits', async () => {
+  for (const kind of ['old', 'synced', 'multiple', 'unknown']) {
+    const h = setup(); await h.message('start', { settings }); const { task } = await h.claim('a');
+    const url = `https://www.bing.com/search?q=${encodeURIComponent(task.query)}`;
+    const current = { visitTime: h.data.run.lastIssuedAt, isLocal: true };
+    const list = kind === 'old' ? [{ ...current, visitTime: current.visitTime - 10000 }]
+      : kind === 'synced' ? [{ ...current, isLocal: false }]
+      : kind === 'multiple' ? [current, current] : [{ isLocal: true }];
+    h.visits.set(url, list); await h.page('page', { url }); await h.advance(5000);
+    assert.equal(h.deleted.length, 0, kind);
+    assert.match(h.data.run.historyNote, /Giữ lịch sử/);
+  }
+});
+
+test('retries when history is written after navigation; ignores unrelated URLs, tabs and disabled cleanup', async () => {
+  const h = setup(); await h.message('start', { settings }); const { task } = await h.claim('a');
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(task.query)}`;
+  await h.page('page', { url });
+  await h.advance(5000);
+  assert.equal(h.deleted.length, 0);
+  h.visits.set(url, [{ visitTime: h.data.run.lastIssuedAt, isLocal: true }]);
+  h.chrome.history.onVisited.fn({ url }); await h.message('get'); assert.equal(h.deleted.length, 1);
+  await h.claim('b');
+  const other = `https://www.bing.com/search?q=${encodeURIComponent(h.data.run.lastQuery)}`;
+  h.visits.set(other, [{ visitTime: h.data.run.lastIssuedAt, isLocal: true }]);
+  h.chrome.tabs.onUpdated.fn(99, { url: other }); await h.message('get');
+  await h.page('page', { url: 'https://www.bing.com/search?q=unrelated' });
+  assert.equal(h.deleted.length, 1);
+  await h.message('stop'); await h.message('start', { settings: { ...settings, clearHistory: false } });
+  const next = (await h.claim('c')).task;
+  const nextUrl = `https://www.bing.com/search?q=${encodeURIComponent(next.query)}`;
+  h.visits.set(nextUrl, [{ visitTime: h.data.run.lastIssuedAt, isLocal: true }]);
+  await h.page('page', { url: nextUrl }); assert.equal(h.deleted.length, 1);
+});
+
+test('history permission failures do not stop the search run', async () => {
+  const h = setup(); await h.message('start', { settings }); const { task } = await h.claim('a');
+  h.chrome.history.getVisits = async () => { throw Error('denied'); };
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(task.query)}`;
+  await h.page('page', { url });
+  await h.advance(5000);
+  assert.equal(h.data.run.running, true);
+  assert.match(h.data.run.historyNote, /Chưa xóa được/);
+  assert.ok((await h.claim('b')).task);
+});
 test('generates 200 unique random word combinations and a fresh set for each run', async () => {
   const h = setup();
   await h.message('start', { settings: { ...settings, count: 200 } });
@@ -63,7 +169,7 @@ test('accepts fractional and zero delays, rejects negative and invalid configura
   }
   assert.equal((await h.message('start', { settings: { ...settings, delay: 0.5 } })).ok, true);
   await h.claim('a'); assert.equal((await h.claim('b')).task, null);
-  h.data.run.nextAt = Date.now() - 1; assert.ok((await h.claim('b')).task);
+  await h.advance(500); assert.ok((await h.claim('b')).task);
 });
 test('keeps plain custom text intact and completes a single search', async () => {
   const h = setup(); await h.message('start', { settings: { count: 1, delay: 0, queries: 'cà phê & sách #1' } });

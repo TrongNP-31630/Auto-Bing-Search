@@ -1,4 +1,4 @@
-# Bing Search Runner 1.2.1 — Edge / Brave
+# Bing Search Runner 1.3.1 — Edge / Brave
 
 Extension Manifest V3 tìm kiếm theo lịch trong một tab Bing. Không cần cài thư viện hay đăng nhập vào extension.
 
@@ -46,9 +46,19 @@ Giữ tab Bing mở. Đóng tab đó hoặc điều hướng nó sang trang ngo�
 - Nguồn: https://support.microsoft.com/en-us/accounts-billing/rewards/limiting-your-searches-in-microsoft-rewards
 - Tài liệu content script: https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts
 
+## Tự xóa lịch sử tìm kiếm (1.3.0)
+
+Trong popup có tùy chọn **Tự xóa lịch sử sau 5 giây**, bật mặc định. Có thể tắt trước khi bắt đầu phiên. Khi phát hiện tab Bing chuyển đến kết quả của từ khóa do extension tạo, extension chờ tối thiểu 5 giây rồi kiểm tra và xóa URL đó trong lịch sử trình duyệt, gồm cả lượt cuối cùng. Bộ hẹn giờ xóa độc lập với thời gian chờ giữa các lượt tìm kiếm; chuyển lượt, kết thúc phiên hoặc bắt đầu phiên mới không hủy việc xóa đã lên lịch. Trình duyệt bận, ngủ hoặc đóng có thể khiến việc xóa muộn hơn; không xóa trước hạn. Không xóa các trang kết quả bạn bấm vào hay toàn bộ lịch sử Bing.
+
+API `history.deleteUrl` xóa tất cả lần truy cập của một URL, không thể chỉ định riêng một visit. Vì vậy, extension chỉ xóa khi URL có đúng một lượt truy cập trên thiết bị hiện tại, với thời gian khớp lượt tự động vừa gửi. Nếu có lịch sử cũ, nhiều lượt trùng URL, lượt đồng bộ từ máy khác hoặc thiếu dữ liệu xác minh thì giữ lại và báo trong popup. Đây là giới hạn có chủ ý để bảo vệ lịch sử khác của bạn. Nếu bật đồng bộ lịch sử của trình duyệt, việc xóa có thể được đồng bộ theo cài đặt của trình duyệt.
+
+Chức năng này không xóa cookie, cache, lịch sử tìm kiếm trong tài khoản Bing/Microsoft hay dữ liệu phía máy chủ; không làm tìm kiếm tự động trở thành tương tác thủ công và không thay đổi điều kiện tính điểm Rewards.
+
+Tài liệu API: https://developer.chrome.com/docs/extensions/reference/api/history
+
 ## Dữ liệu và quyền truy cập
 
-Chỉ dùng quyền lưu cấu hình/tiến độ trên máy và chạy script trong các trang `https://www.bing.com/*`, `https://bing.com/*`. Script tìm ô nhập từ khóa và nút tìm kiếm để điền và bấm. Không có máy chủ riêng, không đọc cookie, mật khẩu hay điểm Rewards. Từ khóa được gửi đến Bing qua biểu mẫu tìm kiếm. Gỡ extension để xóa dữ liệu cục bộ của nó.
+Dùng quyền lưu cấu hình/tiến độ trên máy, chạy script trong các trang `https://www.bing.com/*`, `https://bing.com/*` và quyền `history` để kiểm tra/xóa đúng URL tìm kiếm vừa tạo. Quyền lịch sử do trình duyệt cấp có phạm vi rộng, nhưng mã chỉ kiểm tra các URL khớp từ khóa trong tab chạy của extension. Script tìm ô nhập từ khóa và nút tìm kiếm để điền và bấm. Không có máy chủ riêng, không đọc cookie, mật khẩu hay điểm Rewards. Từ khóa được gửi đến Bing qua biểu mẫu tìm kiếm. Gỡ extension để xóa dữ liệu cục bộ của nó.
 
 ## Cập nhật từ phiên bản cũ
 
