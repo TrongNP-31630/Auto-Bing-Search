@@ -18,7 +18,7 @@ Nếu dùng file ZIP, giải nén trước rồi chọn thư mục chứa manife
 
 ### Android — Edge Canary (thử nghiệm)
 
-- [Tải bản Android 1.2.1 (.crx)](android/bing-search-runner-android-v1.2.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải file cài.
+- [Tải bản Android 1.3.1 (.crx)](android/bing-search-runner-android-v1.3.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải file cài.
 - [Hướng dẫn cài trên Android](android/README.md).
 - Bản Android dùng cùng chức năng với mã nguồn PC, với giao diện điều chỉnh cho màn hình hẹp. Gói đã được kiểm tra chữ ký và nội dung; chưa được xác nhận trên thiết bị Android thật.
 - Giữ Edge ở trước màn hình khi thử. Android có thể tạm dừng tab khi chuyển ứng dụng hoặc khóa màn hình.
@@ -46,7 +46,7 @@ Giữ tab Bing mở. Đóng tab đó hoặc điều hướng nó sang trang ngo�
 - Nguồn: https://support.microsoft.com/en-us/accounts-billing/rewards/limiting-your-searches-in-microsoft-rewards
 - Tài liệu content script: https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts
 
-## Tự xóa lịch sử tìm kiếm (1.3.0)
+## Tự xóa lịch sử tìm kiếm sau 5 giây (1.3.1)
 
 Trong popup có tùy chọn **Tự xóa lịch sử sau 5 giây**, bật mặc định. Có thể tắt trước khi bắt đầu phiên. Khi phát hiện tab Bing chuyển đến kết quả của từ khóa do extension tạo, extension chờ tối thiểu 5 giây rồi kiểm tra và xóa URL đó trong lịch sử trình duyệt, gồm cả lượt cuối cùng. Bộ hẹn giờ xóa độc lập với thời gian chờ giữa các lượt tìm kiếm; chuyển lượt, kết thúc phiên hoặc bắt đầu phiên mới không hủy việc xóa đã lên lịch. Trình duyệt bận, ngủ hoặc đóng có thể khiến việc xóa muộn hơn; không xóa trước hạn. Không xóa các trang kết quả bạn bấm vào hay toàn bộ lịch sử Bing.
 
