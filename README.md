@@ -1,4 +1,4 @@
-# Bing Search Runner 1.3.1 — Edge / Brave
+# Bing Search Runner 1.3.2 — Edge / Brave
 
 Extension Manifest V3 tìm kiếm theo lịch trong một tab Bing. Không cần cài thư viện hay đăng nhập vào extension.
 
@@ -18,7 +18,7 @@ Nếu dùng file ZIP, giải nén trước rồi chọn thư mục chứa manife
 
 ### Android — Edge Canary (thử nghiệm)
 
-- [Tải bản Android 1.3.1 (.crx)](android/bing-search-runner-android-v1.3.1.crx). Trên trang file của GitHub, chọn **Download raw file** để tải file cài.
+- [Tải bản Android 1.3.2 (.crx)](android/bing-search-runner-android-v1.3.2.crx). Trên trang file của GitHub, chọn **Download raw file** để tải file cài.
 - [Hướng dẫn cài trên Android](android/README.md).
 - Bản Android dùng cùng chức năng với mã nguồn PC, với giao diện điều chỉnh cho màn hình hẹp. Gói đã được kiểm tra chữ ký và nội dung; chưa được xác nhận trên thiết bị Android thật.
 - Giữ Edge ở trước màn hình khi thử. Android có thể tạm dừng tab khi chuyển ứng dụng hoặc khóa màn hình.

@@ -139,6 +139,11 @@ async function cleanHistoryTarget(target) {
 
 async function trackSearchHistory(run, tabId, value) {
   if (!run?.clearHistory || run.tabId !== tabId || !run.lastIssuedAt || !isBing(value)) return;
+  if (typeof chrome.history?.getVisits !== 'function' || typeof chrome.history?.deleteUrl !== 'function') {
+    const note = 'Trình duyệt này không hỗ trợ xóa lịch sử; tìm kiếm vẫn tiếp tục.';
+    if (run.historyNote !== note) await chrome.storage.local.set({ run: { ...run, historyNote: note } });
+    return;
+  }
   const url = new URL(value);
   if (url.pathname !== '/search' || url.searchParams.get('q') !== run.lastQuery || Date.now() > run.lastIssuedAt + 120000) return;
   const { historyTargets = [] } = await chrome.storage.local.get('historyTargets');
@@ -150,11 +155,20 @@ async function trackSearchHistory(run, tabId, value) {
   await cleanHistoryTarget(target);
 }
 
+async function updateBadge(text) {
+  // Android builds may expose only part of chrome.action. A cosmetic feature
+  // must never abort a reserved search before the content script receives it.
+  try {
+    await chrome.action?.setBadgeBackgroundColor?.({ color: '#096b55' });
+    await chrome.action?.setBadgeText?.({ text });
+  } catch { /* Badge support is optional; search and stop must still work. */ }
+}
+
 async function finish(reason, error = false) {
   const { run } = await chrome.storage.local.get('run');
   if (!run) return;
   await chrome.storage.local.set({ run: { ...run, running: false, stopped: true, nextAt: null, reason, error } });
-  await chrome.action.setBadgeText({ text: '' });
+  await updateBadge('');
 }
 
 function ownsTab(sender, run) {
@@ -180,8 +194,7 @@ async function handle(message, sender) {
     // Reserve once per loaded document before allowing a click, so worker
     // suspension, duplicate timers and storage events cannot duplicate a query.
     await chrome.storage.local.set({ run: { ...run, done, running, lastPageId: message.pageId, nextAt: running ? Date.now() + run.delay * 1000 : null, lastQuery: query, lastIssuedAt: Date.now(), reason: running ? '' : 'Đã gửi đủ lượt tìm kiếm.' } });
-    await chrome.action.setBadgeBackgroundColor({ color: '#096b55' });
-    await chrome.action.setBadgeText({ text: running ? String(done) : '' });
+    await updateBadge(running ? String(done) : '');
     return { task: { query, runId: run.id, done } };
   }
   if (message.type === 'get') return await chrome.storage.local.get(['settings', 'run']);
@@ -230,7 +243,7 @@ chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
     else await trackSearchHistory(run, tabId, url);
   });
 });
-chrome.history.onVisited.addListener(item => eventJob(async () => {
+chrome.history?.onVisited?.addListener(item => eventJob(async () => {
   const { historyTargets = [] } = await chrome.storage.local.get('historyTargets');
   for (const target of historyTargets) {
     if (target.url === item.url && target.status === 'pending') await cleanHistoryTarget(target);

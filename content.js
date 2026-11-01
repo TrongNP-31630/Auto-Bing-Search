@@ -13,8 +13,11 @@
     const visible = node => node && node.getClientRects().length && !node.disabled;
     const input = [...document.querySelectorAll('#sb_form_q, #sb_form input[name="q"], #sb_form textarea[name="q"]')].find(visible);
     const form = input?.form || input?.closest('form');
-    const button = form && [...form.querySelectorAll('#sb_form_go, #search_icon, button[type="submit"], input[type="submit"], label[for="sb_form_go"]')].find(visible);
-    return visible(input) && visible(button) ? { input, button } : null;
+    const candidates = form ? [...form.querySelectorAll('#sb_form_go, #search_icon, button[type="submit"], input[type="submit"], label[for="sb_form_go"]')] : [];
+    const button = candidates.find(visible) || candidates.find(node => !node.disabled && ['submit', 'image'].includes(node.type));
+    // Mobile Bing may show only a keyboard Search action and hide its submit
+    // control. Submit the same form if there is no clickable search icon.
+    return visible(input) && form && (button || typeof form.requestSubmit === 'function') ? { input, button, form } : null;
   }
   function checkNavigation() {
     if (location.href === pageUrl) return;
@@ -50,7 +53,7 @@
       const claimedPageId = pageId;
       ({ task } = await send('claim', { runId: run.id, pageId: claimedPageId }));
       if (!task) return;
-      const { input, button } = found;
+      const { input, button, form } = found;
       const prototype = input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
       Object.getOwnPropertyDescriptor(prototype, 'value').set.call(input, task.query);
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -59,9 +62,10 @@
       if (!current || current.id !== task.runId || current.stopped || current.done !== task.done) return;
       // Use Bing's actual search control. Never replace the tab URL or bypass
       // the form with a direct navigation. DOM events remain synthetic.
-      if (!button.isConnected) throw new Error('Nút tìm kiếm đã thay đổi. Hãy tải lại trang Bing.');
+      if (button ? !button.isConnected : !form.isConnected) throw new Error('Biểu mẫu tìm kiếm đã thay đổi. Hãy tải lại trang Bing.');
       pendingNavigation = { runId: task.runId, pageId: claimedPageId };
-      button.click();
+      if (button) button.click();
+      else form.requestSubmit();
       checkNavigation();
       // Cancel this watchdog on either a full load or a same-document URL change.
       if (pendingNavigation) navigationTimer = setTimeout(() => {

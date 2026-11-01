@@ -39,6 +39,47 @@ function setup() {
   return { data, injections, tabs, chrome, message, page, claim, load, visits, deleted, advance, select(id) { active = id; } };
 }
 const settings = { count: 3, delay: 0, queries: '' };
+for (const mode of ['missing', 'throws']) test(`Android: ${mode} badge API cannot block the first search or stop`, async () => {
+  const h = setup();
+  if (mode === 'missing') delete h.chrome.action;
+  else h.chrome.action.setBadgeText = async () => { throw Error('Not supported on Android'); };
+  assert.equal((await h.message('start', { settings })).ok, true);
+  assert.ok((await h.claim('a')).task);
+  assert.equal((await h.message('stop')).ok, true);
+  assert.equal(h.data.run.running, false);
+});
+
+test('Android: absent history API does not break worker initialization or searches', async () => {
+  const h = setup(); delete h.chrome.history; h.load();
+  assert.equal((await h.message('start', { settings })).ok, true);
+  const { task } = await h.claim('a'); assert.ok(task);
+  await h.page('page', { url: `https://www.bing.com/search?q=${encodeURIComponent(task.query)}` });
+  assert.equal(h.data.run.running, true);
+  assert.match(h.data.run.historyNote, /không hỗ trợ/);
+  assert.ok((await h.claim('b')).task);
+});
+
+for (const mode of ['hidden-submit', 'keyboard-submit']) test(`Android: mobile search works with ${mode}`, async () => {
+  const timers = []; let submitted = 0;
+  class Input { set value(value) { this.text = value; } get value() { return this.text; } dispatchEvent() {} getClientRects() { return [{}]; } }
+  const input = new Input();
+  const hiddenSubmit = { type: 'submit', isConnected: true, getClientRects() { return []; }, click() { submitted++; } };
+  input.form = { isConnected: true, querySelectorAll() { return mode === 'hidden-submit' ? [hiddenSubmit] : []; }, requestSubmit() { submitted++; } };
+  let run = { id: 'mobile', running: true, nextAt: 0, done: 0 };
+  const chrome = { storage: { onChanged: { addListener() {} } }, runtime: { async sendMessage(message) {
+    if (message.type === 'page') return { ok: true, run };
+    if (message.type === 'claim') {
+      run = { ...run, done: 1, running: false };
+      return { ok: true, task: { query: 'mobile search', runId: 'mobile', done: 1 } };
+    }
+    throw Error('Unexpected message: ' + message.type);
+  } } };
+  vm.runInNewContext(read('content.js'), { chrome, crypto, Date, HTMLInputElement: Input, HTMLTextAreaElement: class {}, Event: class {},
+    location: { href: 'https://www.bing.com/' }, addEventListener() {}, setInterval() {},
+    document: { querySelectorAll() { return [input]; } }, setTimeout(fn) { timers.push(fn); return timers.length; }, clearTimeout() {} });
+  await new Promise(setImmediate); await timers[0]();
+  assert.equal(input.value, 'mobile search'); assert.equal(submitted, 1);
+});
 test('waits the full five seconds and cleans final search even after a new run starts', async () => {
   const h = setup(); await h.message('start', { settings: { ...settings, count: 1 } });
   const { task } = await h.claim('a');
